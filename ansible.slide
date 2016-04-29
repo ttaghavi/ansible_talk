@@ -1,0 +1,376 @@
+Ansible - Who Needs Another Automation Framework?
+Introduction to the concepts of the Python-based automation framework Ansible
+
+* Try as we go!
+
+If you want to try the examples during this talk, you will need following packages installed:
+
+- sudo apt-get install pip
+- sudo apt-get install python-dev
+
+And I recommend virtualenv to avoid installing ansible system wide:
+
+- sudo pip install virtualenv
+
+Checkout this talk:
+
+- URL
+
+
+* So Why Ansible?
+
+- easy to get started
+- lightweight ( no agents or extra infrastructure required )
+- based on ssh, so you can use existing users, permissions, keys etc.
+- easy to integrate with existing infrastructures like Jenkins
+- playbook syntax is human readable and part of the deployment process documentation
+
+
+* Easy to Get Started
+
+.play virtualenv.sh /begin/,/end/
+
+Takes about 30 seconds and we are ready to go.
+
+See [[http://docs.ansible.com/intro_installation.html]]
+
+* That's All? Really?
+
+Yes, we did setup a usable ansible environment with the two primary ansible commands available:
+
+- *ansible* for ad hoc automation
+- *ansible-playbook* to execute playbooks (more on playbooks later)
+
+So we are ready to explore the first cool feature of Ansible, ad-hoc automation.
+
+* Almost 
+
+Ansible needs its default inventory location to be existent
+
+.play default_inventory.sh /begin/,/end/
+
+
+* Ad-Hoc Automation with Ansible
+
+.play simple_adhoc.sh /begin/,/end/
+
+We just executed the simplest possible ansible module *ping* on our local machine.
+We will learn more about ansible modules in a few minutes.
+
+Usefull commandline arguments:
+  
+  -u REMOTE_USER, --user=REMOTE_USER
+                        connect as this user (default=your_username) 
+  -k, --ask-pass        ask for SSH password
+  --ask-su-pass         ask for su password
+  -K, --ask-sudo-pass   ask for sudo password
+  -S, --su              run operations with su
+  -R SU_USER, --su-user=SU_USER
+                        run operations with su as this user (default=root)
+  -s, --sudo            run operations with sudo (nopasswd)
+  -v, --verbose         verbose mode (-vvv for more, -vvvv to enable
+                        connection debugging)
+  -c CONNECTION, --connection=CONNECTION
+                        connection type to use (default=smart)
+
+
+
+
+* Modules
+
+- scripts with a very simple interface can be written in any language
+- are called with the parameters as key=value pairs
+- return json
+- are idempotent, i.e. do nothing if the desired target state is already there.
+
+For most use cases there are already modules included in ansible, but it is easy to write your own modules.
+
+* Modules Overview
+
+.image images/ansible_modules.png 500 900
+
+[[http://docs.ansible.com/modules_by_category.html]]
+
+* More Ad-Hoc Examples with Modules
+
+Gathering facts
+
+.play gathering_facts.sh /begin/,/end/
+
+Check out the source code of  this talk  into /tmp
+
+# TODO ansible is to big, takes to long in presentation mode :(
+
+.play git_checkout.sh /begin/,/end/
+
+Delete it again
+
+.play delete_checkout.sh /begin/,/end/
+
+Stop apache running at [[http://localhost/]]:
+
+.play stop_apache.sh /begin/,/end/
+
+Start it again
+
+.play start_apache.sh /begin/,/end/
+
+* Inventory
+
+- We have seen that ansible scales down to a single (local) machine.
+- To scale up to multiple machines we need an inventory
+
+.code hosts
+
+Ansible's default inventories are files in .ini format. A section corresponds to a host group, in this case *demo*. In this case the four members of demo are obviously the local machine.
+
+An inventory can contain much more than the hostnames. You can also provide variables for hosts or groups in a combination of .ini and .yaml files.
+
+* Ad-Hoc with Inventory
+
+First export inventory location (defaults to /etc/anslible/hosts)
+
+.code simple_adhoc_with_inventory.sh /inventory/,/end/
+
+Now we can use the demo group defined in the inventory with ansible
+
+.play simple_adhoc_with_inventory.sh /begin/,/end/
+
+
+- Ansible will execute the ping module in parallel on all machines matching *demo*.
+- You can limit the number of parallel deployments with parameter -f n or --forks=n.
+
+* But .ini Files Do Not Scale
+
+If you have to manage, let's say, 700 vms in two data centers .ini and .yaml files will not scale.
+
+* Dynamic Inventories
+
+- Ansible can read dynamic inventories as an output of a script
+- So you can plug in your own inventory
+- As there was no spacewalk inventory included with ansible when we started we wrote our own
+- Our inventory does also our configuration management and provides settings based on stage and locale to our playbooks.
+
+* Ansible Stock Dynamic Inventories
+
+Currently ansible comes with scripts that support following inventory sources (found in the plugins/ folder)
+
+  Amazon EC2
+  Cobbler
+  BSD Jails
+  Digital Ocean
+  Google Compute Engine
+  Linode
+  OpenShift
+  OpenStack Nova
+  Red Hat's SpaceWalk
+  Vagrant (not to be confused with the provisioner in vagrant, which is preferred)
+  Zabbix
+
+#Note that at the time when bettermarks started with ansible there was no SpaceWalk script, so we had to write our own script.
+
+see [[http://docs.ansible.com/intro_dynamic_inventory.html]] for more information on dynamic inventories.
+
+* Playbooks
+
+* Playbooks
+
+"If Ansible modules are the tools in your workshop, playbooks are your design plans."
+
+Simply put, playbooks are a collection of ansible actions. Additionaly, they provide tools to control the flow of those actions.
+
+A playbook can be used to provision a single machine, orchestrate a set of machines or even an entire cluster.
+
+- Playbooks are human readable, written in YAML.
+- Describe the desired state of your infrastructure.
+
+* Anatomy of a Playbook
+
+A playbook consists of one or more *plays*.
+
+Each play has:
+
+- a header section defining hosts and optional variables
+- a task section defining the actual tasks to be executed
+- an optional handler section containing callbacks to be notified by the tasks.
+
+* Example playbook
+
+.code playbooks/playbook1.yml
+.play playbooks/playbook1.sh /begin/,/end/
+
+- each play gathers information about the target hosts before running
+- a failed task stops and exits the playbook
+
+* Header
+
+ ---
+ - name: Play 1             # Play description
+   hosts: demo              # can be either a host or a group of hosts (from the inventory)
+   remote_user: user_1      # user used by the ssh connection
+   sudo: yes                # execute modules as sudo
+   sudo_user: user_2        # sudo user
+
+The only mandatory key in the header is "hosts". Everything else is optional.
+
+* Tasks
+
+- is defined by a name, a module and a key/value pair
+
+ tasks:
+   - name: make sure apache is running
+     service: name=httpd state=running
+
+- can ignore errors, otherwise the execution of the playbook will stop on error
+
+ ignore_errors: True
+
+.play playbooks/playbook2.sh /begin/,/end/
+
+- after execution, comes back with either of the following states: "ok", "changed", "failed" or "skipped".
+
+* Handlers
+
+- handlers are "callbacks" that get notified by tasks.
+- handlers are defined in the same way as tasks but in the handlers section.
+- handlers are only executed if the calling task comes back with the "changed" state
+
+.code playbooks/playbook3.yml
+.play playbooks/playbook3.sh /begin/,/end/
+
+.play playbooks/delete_tmp_config.sh /begin/,/end/
+
+
+* Variables
+
+- can be a single value, a list or a hashmap/dictionary
+- can be recognized by double brackets: {{var_name}}
+- support the jinja2 filters system:
+
+  {{var_name}} => /path/to/filename.txt
+  {{var_name|basename}} =>  filename.txt
+
+- see [[http://jinja.pocoo.org/docs/templates/#builtin-filters]] for a list of filters
+
+
+* Variable origins
+
+- defined or included in the playbook (play header):
+
+    vars:
+      tmp_dir: /tmp
+
+    vars_file:
+      - "vars/common.yml"
+
+- the inventory (.ini format):
+
+  [demo:vars]
+  timeout=30
+
+- the command line:
+
+  ansible-playbook playbook_file.yml -e "var1=value1 var2=value2"
+
+- any variable gathered from the setup module:
+
+.play gathering_facts.sh /begin/,/end/
+
+#* Variables example
+#
+#.code playbooks/playbook4.yml
+#.play playbooks/playbook4.sh /begin/,/end/
+
+* Loops
+
+- execute a task several times, once for each item in a collection
+- the collection can be a list, a hashmap, fileglobs, etc...
+
+The simplest loop is iterating over a list of items:
+
+ - name: a task to add several users
+   user: name={{ item }} state=present groups=dev
+   with_items:
+      - testuser1
+      - testuser2
+
+* More Loops
+
+See  [[http://docs.ansible.com/playbooks_loops.html]] for more complex loop examples including:
+
+- with_nested: nested loops
+- with_dict: loops over hashes
+- with_fileglob: loops over fileglobs
+- with_sequence: loops over integer sequences
+- do until loops (along with a retries limit + delay between retries)
+
+* Conditionals
+
+You can use the "when" statement to execute tasks only if specific conditions are met.
+
+ tasks:
+   - name: "shutdown Debian flavored systems"
+     command: /sbin/shutdown -t now
+     when: ansible_os_family == "Debian"
+
+* Putting it together
+
+.code playbooks/playbook6.yml
+.play playbooks/playbook6.sh /begin/,/end/
+.play playbooks/playbook7.sh /begin/,/end/
+
+* Includes
+
+The include statement allows us to split our playbook into smaller parts, either for re-usability or better overview:
+
+Let's say we have one top-level playbook, "site.yml":
+
+ - include: common.yml
+ - include: load_balancers.yml
+ - include: webservers.yml
+ - include: dbservers.yml
+
+* Roles
+
+Roles are ansible's way of automating / structuring includes.
+
+Only two conditions have to be met to be able to use roles. Specify roles in the play header:
+
+  ---
+  - name: a play with roles
+    hosts: 127.0.0.1
+    roles:
+      - my_own_custom_role
+
+And have following directory structure ready:
+
+  roles
+  ├── my_own_custom_role
+  │   ├── tasks
+  │   ├── handlers
+
+* Where to find roles?
+
+Ansible Galaxy is a "roles repository", a great place to find re-usable roles for your playbooks. See [[https://galaxy.ansible.com/]] to get started.
+
+You can install/checkout the roles with the command:
+
+  ansible-galaxy install bobrik.kibana
+
+
+* Write Your Own Modules
+
+- write the modules in any language you want
+- only File I/O is required
+- any input parameter is a pair of key=value
+- output has to be json or key=value results all on one line
+
+ #!/usr/bin/python
+
+ import datetime
+ import json
+
+ date = str(datetime.datetime.now())
+ print json.dumps({
+     "time" : date
+ })

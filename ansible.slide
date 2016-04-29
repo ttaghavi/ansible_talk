@@ -28,7 +28,7 @@ Checkout this talk:
 
 * Easy to Get Started
 
-.play virtualenv.sh /begin/,/end/
+.play scripts/virtualenv.sh /begin/,/end/
 
 Takes about 30 seconds and we are ready to go.
 
@@ -47,12 +47,12 @@ So we are ready to explore the first cool feature of Ansible, ad-hoc automation.
 
 Ansible needs its default inventory location to be existent
 
-.play default_inventory.sh /begin/,/end/
+.play scripts/default_inventory.sh /begin/,/end/
 
 
 * Ad-Hoc Automation with Ansible
 
-.play simple_adhoc.sh /begin/,/end/
+.play scripts/simple_adhoc.sh /begin/,/end/
 
 We just executed the simplest possible ansible module *ping* on our local machine.
 We will learn more about ansible modules in a few minutes.
@@ -95,25 +95,21 @@ For most use cases there are already modules included in ansible, but it is easy
 
 Gathering facts
 
-.play gathering_facts.sh /begin/,/end/
+.play scripts/gathering_facts.sh /begin/,/end/
 
 Check out the source code of  this talk  into /tmp
 
 # TODO ansible is to big, takes to long in presentation mode :(
 
-.play git_checkout.sh /begin/,/end/
+.play scripts/git_checkout.sh /begin/,/end/
 
 Delete it again
 
-.play delete_checkout.sh /begin/,/end/
+.play scripts/delete_checkout.sh /begin/,/end/
 
-Stop apache running at [[http://localhost/]]:
+Simple command
 
-.play stop_apache.sh /begin/,/end/
-
-Start it again
-
-.play start_apache.sh /begin/,/end/
+.play scripts/uptime.sh /begin/,/end/
 
 * Inventory
 
@@ -130,11 +126,11 @@ An inventory can contain much more than the hostnames. You can also provide vari
 
 First export inventory location (defaults to /etc/anslible/hosts)
 
-.code simple_adhoc_with_inventory.sh /inventory/,/end/
+.code scripts/simple_adhoc_with_inventory.sh /inventory/,/end/
 
 Now we can use the demo group defined in the inventory with ansible
 
-.play simple_adhoc_with_inventory.sh /begin/,/end/
+.play scripts/simple_adhoc_with_inventory.sh /begin/,/end/
 
 
 - Ansible will execute the ping module in parallel on all machines matching *demo*.
@@ -148,10 +144,22 @@ If you have to manage, let's say, 700 vms in two data centers .ini and .yaml fil
 
 - Ansible can read dynamic inventories as an output of a script
 - So you can plug in your own inventory
-- As there was no spacewalk inventory included with ansible when we started we wrote our own
-- Our inventory does also our configuration management and provides settings based on stage and locale to our playbooks.
 
-* Ansible Stock Dynamic Inventories
+Convention is:
+
+- script must support "--list" argument
+- output must be json
+
+  {
+    "demo"   : {
+        "hosts"   : [ "127.0.0.1", "127.0.0.2" ],
+        "vars"    : {
+            "a"   : true
+        }
+  }
+
+
+* Dynamic Inventories provided by ansible
 
 Currently ansible comes with scripts that support following inventory sources (found in the plugins/ folder)
 
@@ -166,8 +174,6 @@ Currently ansible comes with scripts that support following inventory sources (f
   Red Hat's SpaceWalk
   Vagrant (not to be confused with the provisioner in vagrant, which is preferred)
   Zabbix
-
-#Note that at the time when bettermarks started with ansible there was no SpaceWalk script, so we had to write our own script.
 
 see [[http://docs.ansible.com/intro_dynamic_inventory.html]] for more information on dynamic inventories.
 
@@ -274,7 +280,7 @@ The only mandatory key in the header is "hosts". Everything else is optional.
 
 - any variable gathered from the setup module:
 
-.play gathering_facts.sh /begin/,/end/
+.play scripts/gathering_facts.sh /begin/,/end/
 
 #* Variables example
 #

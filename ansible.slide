@@ -14,7 +14,7 @@ And I recommend virtualenv to avoid installing ansible system wide:
 
 Checkout this talk:
 
-- URL
+- git clone https://github.com/ttaghavi/ansible_talk.git
 
 
 * So Why Ansible?
@@ -43,13 +43,6 @@ Yes, we did setup a usable ansible environment with the two primary ansible comm
 
 So we are ready to explore the first cool feature of Ansible, ad-hoc automation.
 
-* Almost 
-
-Ansible needs its default inventory location to be existent
-
-.play scripts/default_inventory.sh /begin/,/end/
-
-
 * Ad-Hoc Automation with Ansible
 
 .play scripts/simple_adhoc.sh /begin/,/end/
@@ -72,8 +65,6 @@ Usefull commandline arguments:
                         connection debugging)
   -c CONNECTION, --connection=CONNECTION
                         connection type to use (default=smart)
-
-
 
 
 * Modules
@@ -121,6 +112,25 @@ Simple command
 Ansible's default inventories are files in .ini format. A section corresponds to a host group, in this case *demo*. In this case the four members of demo are obviously the local machine.
 
 An inventory can contain much more than the hostnames. You can also provide variables for hosts or groups in a combination of .ini and .yaml files.
+
+* Inventory location
+
+Without any setup, ansible looks for the file:
+
+  /etc/ansible/hosts
+
+Other options are:
+
+- environment variables:
+
+  export ANSIBLE_HOSTS=/path/to/file
+
+- ansible.cfg (different locations):
+  
+  [defaults]
+  inventory = /path/to/file
+
+- command line "-i" option
 
 * Ad-Hoc with Inventory
 
@@ -189,6 +199,10 @@ A playbook can be used to provision a single machine, orchestrate a set of machi
 
 - Playbooks are human readable, written in YAML.
 - Describe the desired state of your infrastructure.
+
+* 
+
+.image images/ansible_playbook.png
 
 * Anatomy of a Playbook
 
